@@ -21,6 +21,9 @@ class _PlayerWidgetState extends State<PlayerWidget> with TickerProviderStateMix
   late double lowerBound;
   late Animation<double> paddingAnimation;
   late Animation<double> imageAnimation;
+  AnimationStatus animationStatus = AnimationStatus.completed;
+  double currentAnimationValue = 0.0;
+  double lastestAnimationValue = 0.0;
 
   @override
   void didChangeDependencies() {
@@ -38,11 +41,17 @@ class _PlayerWidgetState extends State<PlayerWidget> with TickerProviderStateMix
   Widget build(BuildContext context) {
     return GestureDetector(
       onVerticalDragUpdate: (details) {
-        animationController.value =
+        final newValue =
             (animationController.value * MediaQuery.of(context).size.height - details.delta.dy) / MediaQuery.of(context).size.height;
+        lastestAnimationValue = currentAnimationValue;
+        animationController.value = newValue;
+        currentAnimationValue = newValue;
       },
       onVerticalDragEnd: (details) {
-        if (animationController.value > 0.5) {
+        bool isForward = currentAnimationValue > lastestAnimationValue;
+        bool isAfter1per4FromScreen = animationController.value > 1 / 4;
+        bool isAfter3per4FromScreen = animationController.value > 3 / 4;
+        if ((isForward && isAfter1per4FromScreen) || isAfter3per4FromScreen) {
           animationController.forward();
         } else {
           animationController.reverse();
