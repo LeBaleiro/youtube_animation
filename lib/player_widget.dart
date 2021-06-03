@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:youtube_animation/models/music_model.dart';
+import 'package:youtube_animation/widgets/player/bottom_player_content_widget.dart';
+import 'package:youtube_animation/widgets/player/image_widget.dart';
 
 class PlayerWidget extends StatefulWidget {
   final MusicModel music;
@@ -15,12 +17,17 @@ class PlayerWidget extends StatefulWidget {
 
 class _PlayerWidgetState extends State<PlayerWidget> with TickerProviderStateMixin {
   double defaultHeight = 50.0;
+  double initialLeftImagePadding = 12.0;
+  double initialVerticalImagePadding = 5.0;
+  double endTopImagePadding = 100.0;
   final duration = Duration(milliseconds: 500);
   late AnimationController animationController;
   late Animation<double> animation;
   late double lowerBound;
-  late Animation<double> paddingAnimation;
+  late Animation<double> leftImagePaddingAnimation;
+  late Animation<double> topImagePaddingAnimation;
   late Animation<double> imageAnimation;
+  late Animation<Color?> animationItemsColor;
   AnimationStatus animationStatus = AnimationStatus.completed;
   double currentAnimationValue = 0.0;
   double lastestAnimationValue = 0.0;
@@ -33,8 +40,10 @@ class _PlayerWidgetState extends State<PlayerWidget> with TickerProviderStateMix
       duration: duration,
     );
     animation = Tween<double>(begin: defaultHeight, end: MediaQuery.of(context).size.height).animate(animationController);
-    paddingAnimation = Tween<double>(begin: 12, end: 0.0).animate(animationController);
+    leftImagePaddingAnimation = Tween<double>(begin: initialLeftImagePadding, end: 0.0).animate(animationController);
+    topImagePaddingAnimation = Tween<double>(begin: initialVerticalImagePadding, end: endTopImagePadding).animate(animationController);
     imageAnimation = Tween<double>(begin: defaultHeight, end: MediaQuery.of(context).size.width).animate(animationController);
+    animationItemsColor = ColorTween(begin: Colors.white, end: Colors.transparent).animate(animationController);
   }
 
   @override
@@ -59,22 +68,32 @@ class _PlayerWidgetState extends State<PlayerWidget> with TickerProviderStateMix
       },
       child: AnimatedBuilder(
         animation: animation,
+        child: Stack(
+          children: [
+            Positioned(
+              left: defaultHeight + initialLeftImagePadding,
+              child: BottomPlayerContentWidget(
+                animationColor: animationItemsColor,
+                musicName: widget.music.name,
+                artistName: widget.music.artist,
+                topPadding: initialVerticalImagePadding,
+              ),
+            ),
+            ImageWidget(
+              leftImagePaddingAnimation: leftImagePaddingAnimation,
+              topImagePaddingAnimation: topImagePaddingAnimation,
+              bottomPadding: initialVerticalImagePadding,
+              imageAnimation: imageAnimation,
+              imageUrl: widget.music.imageUrl,
+            ),
+          ],
+        ),
         builder: (context, child) {
           return Container(
-            padding: EdgeInsets.only(left: paddingAnimation.value),
             width: MediaQuery.of(context).size.width,
             height: animation.value,
             color: Color(0xFF010101),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Image.network(
-                  widget.music.imageUrl,
-                  height: imageAnimation.value,
-                  fit: BoxFit.cover,
-                ),
-              ],
-            ),
+            child: child,
           );
         },
       ),
